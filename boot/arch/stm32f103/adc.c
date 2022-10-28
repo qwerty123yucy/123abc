@@ -82,7 +82,7 @@ void adc_set_rchannel(enum adc_periph periph, uint32_t ch_num, enum adc_ch *ch_l
 	uint32_t sqr_ptr = ADC_SQR(0U);
 	uint32_t sqr = raw_readl((void *)(periph + sqr_ptr));
 	
-	for(int i = 0;i < num;i++){
+	for(uint32_t i = 0;i < num;i++){
 		// each sqr contains 6 channels
 		if(i != 0 && !(i % 6)){
 			raw_writel(sqr, (void *)(periph + sqr_ptr));

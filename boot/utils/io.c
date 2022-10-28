@@ -104,7 +104,7 @@ uint32_t put_word_uint(uint32_t data){
 
 void put_word_hex(uint32_t data){
         putc('0'); putc('x');
-        for(int i = 0;i < 2 * sizeof(uint32_t);i++){
+        for(uint32_t i = 0;i < 2 * sizeof(uint32_t);i++){
                 uint32_t tmp = (data >> (28 - 4*i)) & 0xf;
                 if(tmp < 10){
                         putc('0' + tmp);

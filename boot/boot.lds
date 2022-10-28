@@ -11,7 +11,7 @@ SECTIONS
 	. = 0x08000000;
 	.boot :
 	{
-		*(.vectors*)
+		KEEP(*(.vectors*))
 		*(.text*)
 		*(.rodata*)
 	} > rom

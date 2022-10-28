@@ -58,7 +58,6 @@
 #define W25X_SECTOR_ALIGN(addr)	((addr) & W25X_SECTOR_MASK)
 #define W25X_BLOCK_ALIGN(addr)	((addr) & W25X_BLOCK_MASK)
 
-#define W25X_VALID_ADDR(addr)	( 0U <= (addr) && (addr) <= W25X_MAX_ADDR )
 
 
 

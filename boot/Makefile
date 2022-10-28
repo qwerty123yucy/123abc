@@ -5,12 +5,16 @@ LD=${PREFIX}-ld
 CPP=$(PREFIX)-gcc -E
 
 
-CFLAGS  = -fno-stack-protector -fno-builtin -nostdlib
+CFLAGS  = -fno-stack-protector -fno-builtin -nostdlib -ffreestanding
+CFLAGS	+= -ffunction-sections -fdata-sections
+CFLAGS	+= -fno-pic -fno-pie
 CFLAGS	+= -I./arch/stm32f103/include/ -I./include/
-CFLAGS  += -g -O3 -mcpu=cortex-m3 -std=c17 -Wall -Werror
+CFLAGS  += -g -O3 -mcpu=cortex-m3 -std=c17 
+CFLAGS	+= -Wall -Wextra -Werror
 
 # libgcc.a is used to calculate float or double values
-LDFLAGS = -g -static -L/usr/lib/gcc/arm-none-eabi/12.2.0/thumb/v7-m/nofp/ -lgcc
+LDFLAGS = -static -L/usr/lib/gcc/arm-none-eabi/12.2.0/thumb/v7-m/nofp/ -lgcc
+LDFLAGS	+= -g --gc-sections
 LD_SCRIPT = ./boot.lds
 
 

@@ -91,7 +91,7 @@ int input_parse(const char *input_buf, uint32_t sz){
 			print_f("not a builtin command!\n");
 		}
 	}
-	return 0;
+	return (int)sz;
 }
 
 int main_loop(){

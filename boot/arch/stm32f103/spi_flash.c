@@ -155,7 +155,7 @@ void spi_flash_erase_sector(uint32_t addr){
  * after chip erasing or sectors involved are erased before, 'erase' can set as false
  */
 void spi_flash_write(uint32_t addr, char *buf, uint32_t sz, bool erase){
-	if((! W25X_VALID_ADDR(addr)) || sz == 0){
+	if(( addr > W25X_MAX_ADDR || sz == 0 )){
 		return;
 	}
 	
@@ -241,7 +241,7 @@ void spi_flash_write(uint32_t addr, char *buf, uint32_t sz, bool erase){
 
 
 void spi_flash_read(uint32_t addr, char *buf, uint32_t sz){
-	if((!(W25X_VALID_ADDR(addr))) || sz == 0){
+	if(( addr > W25X_MAX_ADDR || sz == 0 )){
 		// wrong arguments
 		return;
 	}
