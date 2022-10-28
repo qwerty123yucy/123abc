@@ -15,9 +15,7 @@
 #define USART_DR_DATA_MASK      (0xff)
 
 
-
 #define USART_BRR       (0x08)
-
 
 
 #define USART_CR1       (0x0c)
@@ -38,7 +36,6 @@
 
 #define USART_CR1_TE    (1 << 3)        //enable TX (sending)
 #define USART_CR1_RE    (1 << 2)        //enable RX (receiving)
-
 
 
 

@@ -17,7 +17,7 @@
 #define PLLHSE      (1<<16) // HSE oscillator clock selected as PLL input clock
 #define PLLON       (1<<24) // enable PLL
 #define PLLRDY      (1<<25) // PLL ready
-#define PLL_9		(7<<18) // PLL x 9
+#define PLL_9	    (7<<18) // PLL x 9
 #define SWSPLL      (2<<2)  // PLL used as system clock
 #define SWPLL       (2<<0)  // set PLL as system clock
 

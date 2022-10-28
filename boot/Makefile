@@ -14,7 +14,7 @@ LDFLAGS = -g -static -L/usr/lib/gcc/arm-none-eabi/12.2.0/thumb/v7-m/nofp/ -lgcc
 LD_SCRIPT = ./boot.lds
 
 
-DEFINES = -DSTACK_SIZE=4096 -DMAX_HEAP_SIZE=4096*4
+DEFINES = -DSTACK_SIZE=4096*4 -DMAX_HEAP_SIZE=4096*4
 
 
 ARCH_ASM_OBJ=boot.o stack.o vectors.o loop.o

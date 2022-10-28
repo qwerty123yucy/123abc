@@ -13,8 +13,8 @@
 #define USART3_BASE		0x40004800U	//on APB1
 
 // system clock frequency
-#define PCLK1			36000000U	//APB1 bus frequency
-#define PCLK2			72000000U	//APB2 bus frequency
+#define PCLK1			36000000U	//APB1 bus default frequency
+#define PCLK2			72000000U	//APB2 bus default frequency
 
 #define FLASH_ACR_BASE  	0x40022000U
 

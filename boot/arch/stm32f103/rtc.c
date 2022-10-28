@@ -50,7 +50,7 @@ void write_rtc_reg(uint32_t rtc_reg_offset, uint32_t val){
 		 * but we just keep it...
 		 */
 		val |= RTC_CRL_CNF | RTC_CRL_RTOFF;
-		// if we writing val to CRL, we need to sync crl according to val, else crl will be covered when exiting configure mode
+		// if we are writing val to CRL, we need to sync crl according to val, else crl will be covered when exiting configure mode
 		crl = val;
 	}
 	// write val to reg addr(except CRL)
@@ -103,6 +103,7 @@ void init_rtc(){
 	return;
 }
 
+// return unix timestamp stored in rtc CNTH/L register
 uint32_t rtc_read_cnt(){
 	uint32_t cnth = read_rtc_reg(RTC_CNTH);
 	uint32_t cntl = read_rtc_reg(RTC_CNTL);

@@ -40,6 +40,9 @@ uint32_t input_handle(const char *input_buf, uint32_t buf_sz){
 
 extern uint32_t dma_buffer[0xf];
 
+static char flash_buf[4096] = {0};
+static char flash_recv_buf[4096] = {0};
+
 // a toy, now just can test usart in/out
 int input_parse(const char *input_buf, uint32_t sz){
 	if(input_buf[0] == 'q' && input_buf[1] == '\n'){
@@ -66,9 +69,24 @@ int input_parse(const char *input_buf, uint32_t sz){
 		else if(format_fit(input_buf, "flash_jedec\n")){
 			print_f("%lx\n", spi_flash_read_jedec());
 		}
-		else if(format_fit(input_buf, "flash_manufact\n")){
-                        print_f("%lx\n", spi_flash_read_manufact());
+		else if(format_fit(input_buf, "flash_write\n")){
+                        print_f("writing to spi_flash...\n");
+			for(int i = 0;i<4096;i++){
+				flash_buf[i] = i%26 + 'a';
+			}
+			spi_flash_write((uint32_t)10, flash_buf, 4096, true);
                 }
+		else if(format_fit(input_buf, "flash_chip_erase\n")){
+                        print_f("erasing spi_flash...\n");
+                        spi_flash_chip_erase();
+                }
+
+		else if(format_fit(input_buf, "flash_read\n")){
+			spi_flash_read((uint32_t)0, flash_recv_buf, 4096);
+			flash_recv_buf[4095] = '\0';
+                        print_f("%s\n", flash_recv_buf);
+                }
+
 		else{
 			print_f("not a builtin command!\n");
 		}
