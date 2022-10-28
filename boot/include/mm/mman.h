@@ -30,10 +30,6 @@
 #define CHUNK_SIZE		4096
 
 
-static uint32_t *malloc_pool_front = NULL;
-static uint32_t *malloc_pool_real = NULL; 
-static bool mem_inited = false;
-
 void memset(const void *addr, const int c, uint32_t sz);
 void memcpy(const void *dst, const void *src, uint32_t sz);
 

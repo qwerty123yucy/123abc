@@ -5,6 +5,11 @@
 #include <utils/io.h>
 
 
+static uint32_t *malloc_pool_front = NULL;
+static uint32_t *malloc_pool_real = NULL;
+static bool mem_inited = false;
+
+
 void memset(const void *addr, const int c, uint32_t sz){
 	char *p = (char *)addr;
 	while(sz--){
@@ -146,8 +151,6 @@ uint32_t *extend_malloc_pool(){
 		*malloc_pool_real = 0 | BLOCK_USED;
 	}
 	return new_head;
-
-
 }
 
 void *mem_alloc(uint32_t size){

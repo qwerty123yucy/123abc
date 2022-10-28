@@ -61,7 +61,17 @@ void init_gpio(){
 	// for buttoms
 	pin_mode(PA0, INPUT_PULL_UP_DOWN, 1);
 	pin_mode(PC13, INPUT_PULL_UP_DOWN, 1);
+
+	// for spi1
+	pin_mode(PA7, OUT_ALT_PUSH_PULL_50, 0);	// PA7 for MOSI
+	pin_mode(PA6, INPUT_FLOATING_PT, 0);	// PA6 for MISO
+	pin_mode(PA5, OUT_ALT_PUSH_PULL_50, 0);	// PA5 for SCK
+	pin_mode(PA4, OUT_ALT_PUSH_PULL_50, 0);	// PA4 for CS
+	
+	
+
 }
+
 
 /* 
  * leds are connected to gpio pins.

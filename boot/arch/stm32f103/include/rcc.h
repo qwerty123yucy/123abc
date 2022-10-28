@@ -6,6 +6,9 @@
 #include <stm32f103.h>
 #include <stdint.h>
 #include <bits.h>
+#include <adc.h>
+#include <spi.h>
+
 
 #define APB1_DIV2	(4<<8)  // AHB1 = HCLK/2
 #define HSION       (1<<0)  // enable HSI
@@ -29,12 +32,20 @@
 #define TIM6_EN     (1<<4) // apbe1
 #define TIM7_EN     (1<<5) // apbe1
 
+// spi
+#define SPI1_EN	    (1<<12) // apbe2
+
 #define USART1_EN   (1<<14) // apbe2
 #define USART2_EN   (1<<17) // apbe1
 #define USART3_EN   (1<<18) // apbe1
 
 #define AFIO_EN	    (1<<0)  // apbe2
-			    
+#define ADC1_EN	    (1<<9)  // apbe2
+#define ADC_PRESCALE_SHIFT(x)	((x) << 14) // in RCC_CFGR
+
+// dma
+#define DMA1_EN	    (1<<0)  // ahbe
+
 #define PWR_EN	    (1<<28) //apbe1	
 #define BKP_EN	    (1<<27) //apbe1
 
@@ -57,7 +68,10 @@ typedef struct {
     uint32_t volatile csr;      // 0x24 - control/status register
 } rcc_t;
 
-void rcc_init(void);
-void enable_rtc();
+enum adc_prescale {adc_div2 = 0U, adc_div4, adc_div6, adc_div8};
 
+void rcc_init(void);
+void rcc_enable_rtc();
+void rcc_enable_adc(enum adc_periph periph, enum adc_prescale pre);
+void rcc_enable_spi(enum spi_periph periph);
 #endif /* _RCC_H_ */

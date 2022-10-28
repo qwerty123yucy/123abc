@@ -12,6 +12,8 @@ _start:
 	bl	init_usart
 	bl	init_exti
 	bl	init_nvic
+	bl	init_adc
+	bl 	init_dma
 	
 	bl	main_loop
 	b	_loop

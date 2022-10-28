@@ -1,5 +1,6 @@
 #ifndef __TIMER_H
 #define	__TIMER_H
+
 #include <bits.h>
 
 #define PRESCALE_VALUE	(8999U)		// 36000000hz APB1 bus freq becomes 4000Mhz
@@ -64,8 +65,17 @@
 #define TIM_DMAR	(0x4c)
 
 #ifndef __ASSEMBLY__
+
+#include <stdint.h>
+#include <stdbool.h>
+
 enum general_purpose_timer {tim2 = 2, tim3, tim4, tim5};
+void timer_general_init(enum general_purpose_timer tim, uint16_t prescale, uint16_t arr);
+void timer_general_on(enum general_purpose_timer tim, bool enable_interrupt);
+void timer_general_off(enum general_purpose_timer tim);
+uint32_t tim2_trigger();
 #endif
+
 
 
 

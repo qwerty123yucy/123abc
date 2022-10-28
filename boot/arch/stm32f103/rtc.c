@@ -10,7 +10,7 @@
 uint32_t read_rtc_reg(uint32_t rtc_reg_offset){
         uint32_t crl;
         // check whether the offset is within rtc regs and valid
-        if(rtc_reg_offset > 0x24 || rtc_reg_offset & 0x3){
+        if(rtc_reg_offset > RTC_ALRL || rtc_reg_offset & 0x3){
                 return 0;
         }
 
@@ -27,7 +27,7 @@ uint32_t read_rtc_reg(uint32_t rtc_reg_offset){
 void write_rtc_reg(uint32_t rtc_reg_offset, uint32_t val){
 	uint32_t crl;
 	// check whether the offset is within rtc regs and valid
-	if(rtc_reg_offset > 0x24 || rtc_reg_offset & 0x3){
+	if(rtc_reg_offset > RTC_ALRL || rtc_reg_offset & 0x3){
 		return;
 	}
 	// wait until the RTOFF turns to 1
@@ -72,7 +72,6 @@ void write_rtc_reg(uint32_t rtc_reg_offset, uint32_t val){
 
 
 void init_rtc(){
-	
 	uint32_t checkr = raw_readl((void *)(BKP_BASE + RTC_CHECKR));
 	if(checkr == RTC_CHECK_VAL){
 		// bkp not reset
@@ -82,7 +81,7 @@ void init_rtc(){
 		// set bkp registers as writable		
 		bkp_write_protect(false);
 		// set rcc bdcr reg to enable rtc with LSE oscillator
-		enable_rtc();
+		rcc_enable_rtc();
 
 		// configure rtc regs (seems neet to enter and exit configure mode several times, need to be optimized)
 		// 1: set default prescale

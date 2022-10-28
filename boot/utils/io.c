@@ -50,6 +50,10 @@ int print_f(const char *format, ...){
 				putc(c);
 				sz++;
 			}
+			else if(format_fit(p, "u")){
+				val = va_arg(args, uint32_t);
+				sz += put_word_uint(val);
+			}
 			else{
 				putc('%');
 				sz++;
@@ -75,6 +79,27 @@ uint32_t puts(char *data){
                 sz++;
         }
         return sz;
+}
+
+uint32_t put_word_uint(uint32_t data){
+	uint64_t p = 10; uint32_t sz = 0;
+	if(!data){
+		putc('0');
+		return 1;
+	}
+	while(data / p){
+		p *= 10;
+	}
+	p /= 10;
+	while(p){
+		putc('0' + (data / p));
+		sz++;
+		data %= p;
+		p /= 10;
+	}
+
+	return sz;
+	
 }
 
 void put_word_hex(uint32_t data){

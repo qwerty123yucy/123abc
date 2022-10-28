@@ -10,7 +10,7 @@
 #define RTC_PRLH_VAL		(RTC_PRL_VAL >> 16)
 #define RTC_PRLL_VAL		(RTC_PRL_VAL & 0xffff)
 
-#define RTC_CNT_VAL		(0U)
+#define RTC_CNT_VAL		(1666024187U)
 #define RTC_CNTH_VAL		(RTC_CNT_VAL >> 16)
 #define RTC_CNTL_VAL		(RTC_CNT_VAL & 0xffff)
 
