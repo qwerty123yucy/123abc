@@ -106,7 +106,7 @@ int main_loop(){
 	}
 	for(;;){
 		print_f("%s", msg);
-		while (sz = input_handle(input_buf, buf_sz) == 0){
+		while ((sz = input_handle(input_buf, buf_sz)) == 0){
 			buf_sz += buf_block;
 			input_buf = mem_realloc(input_buf, buf_sz);
 			if(input_buf == NULL){

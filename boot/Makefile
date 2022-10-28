@@ -7,7 +7,7 @@ CPP=$(PREFIX)-gcc -E
 
 CFLAGS  = -fno-stack-protector -fno-builtin -nostdlib
 CFLAGS	+= -I./arch/stm32f103/include/ -I./include/
-CFLAGS  += -g -O3 -mcpu=cortex-m3 -std=c17
+CFLAGS  += -g -O3 -mcpu=cortex-m3 -std=c17 -Wall -Werror
 
 # libgcc.a is used to calculate float or double values
 LDFLAGS = -g -static -L/usr/lib/gcc/arm-none-eabi/12.2.0/thumb/v7-m/nofp/ -lgcc

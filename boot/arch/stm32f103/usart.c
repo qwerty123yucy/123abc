@@ -42,7 +42,8 @@ void usart_reset(struct usart_t *dev){
 	// set baud_rate register
 	uint32_t brr = calculate_brr(dev->baud_rate, PCLK2, dev->oversampling);
 	// result from 'calculate_brr' seems is wrong. temporarily writing hard code value.
-	raw_writel(0x00000271, (void *)(dev->base_addr + USART_BRR)); //??? why my calculation is wrong?
+	brr = 0x00000271;
+	raw_writel(brr, (void *)(dev->base_addr + USART_BRR)); //??? why my calculation is wrong?
 
 
 	// set cr2
