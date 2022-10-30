@@ -2,7 +2,7 @@
 #define __SPI_FLASH_H
 
 #include <stdint.h>
-
+#include <stdbool.h>
 #define dummy_char		((char)0xff)
 
 // commands for w25x flash
@@ -57,11 +57,6 @@
 #define W25X_PAGE_ALIGN(addr)	((addr) & W25X_PAGE_MASK)
 #define W25X_SECTOR_ALIGN(addr)	((addr) & W25X_SECTOR_MASK)
 #define W25X_BLOCK_ALIGN(addr)	((addr) & W25X_BLOCK_MASK)
-
-
-
-
-
 
 
 

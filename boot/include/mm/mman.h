@@ -32,10 +32,13 @@
 
 void memset(const void *addr, const int c, uint32_t sz);
 void memcpy(const void *dst, const void *src, uint32_t sz);
+int memcmp(const void *str1, const void *str2, uint32_t sz);
+char *strchr(const char *str, const int c);
+
 
 void *mem_alloc(uint32_t size);
-void mem_free(void *);
 void *mem_realloc(void *addr, uint32_t sz);
+void mem_free(void *);
 
 
 #endif

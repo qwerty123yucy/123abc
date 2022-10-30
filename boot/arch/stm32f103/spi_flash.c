@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <mm/mman.h>
-
+#include <utils/io.h>
 
 static bool spi_flash_inited = false;
 static bool spi_flash_enabled = false;
@@ -132,7 +132,8 @@ void spi_flash_erase_sector(uint32_t addr){
 		// the addr is not aligned by sector, refuse erasing
 		return;
 	}
-
+	print_f("sector to be erased: %lx\n", addr);
+	spi_flash_wait_busy();
 	spi_flash_write_protect(false);
 	spi_flash_reconnect();
 	spi_send_char(spi1, w25x_sector_erase);

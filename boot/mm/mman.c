@@ -18,6 +18,30 @@ void memset(const void *addr, const int c, uint32_t sz){
 	return;
 }
 
+int memcmp(const void *str1, const void *str2, uint32_t sz){
+	char *p_str1 = (char *)str1;
+	char *p_str2 = (char *)str2;
+	while(sz--){
+		if((*p_str1 != *p_str2)){
+			return (int)(*p_str1) - (int)*p_str2;
+		}		
+		p_str1++;
+		p_str2++;
+	}
+	return 0;
+}
+
+char *strchr(const char *str, const int c){
+	char *p = (char *)str;
+	while(*p != '\0' && *p != (char)c){
+		p++;
+	}
+	if(*p == '\0'){
+		p = NULL;
+	}
+	return p;
+}
+
 void memcpy(const void *dst, const void *src, uint32_t sz){
 	char *p_dst = (char *)dst;
 	char *p_src = (char *)src;

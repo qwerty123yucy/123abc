@@ -8,7 +8,7 @@ CPP=$(PREFIX)-gcc -E
 CFLAGS  = -fno-stack-protector -fno-builtin -nostdlib -ffreestanding
 CFLAGS	+= -ffunction-sections -fdata-sections
 CFLAGS	+= -fno-pic -fno-pie
-CFLAGS	+= -I./arch/stm32f103/include/ -I./include/
+CFLAGS	+= -I./arch/stm32f103/include/ -I./include/ -I./fs/fatfs_official/source
 CFLAGS  += -g -O3 -mcpu=cortex-m3 -std=c17 
 CFLAGS	+= -Wall -Wextra -Werror
 
@@ -31,7 +31,12 @@ MM_SRC=./mm/
 UTILS_OBJ=shell.o io.o time.o
 UTILS_SRC=./utils/
 
-OBJ	:=	$(addprefix $(ARCH_SRC),$(ARCH_OBJ)) $(addprefix $(MM_SRC),$(MM_OBJ)) $(addprefix $(UTILS_SRC),$(UTILS_OBJ))
+
+FS_FATFS_OFFICIAL_OBJ=diskio.o ff.o ffunicode.o ffsystem.o
+FS_OBJ=$(addprefix fatfs_official/source/, $(FS_FATFS_OFFICIAL_OBJ))
+FS_SRC=./fs/
+
+OBJ	:=	$(addprefix $(ARCH_SRC),$(ARCH_OBJ)) $(addprefix $(MM_SRC),$(MM_OBJ)) $(addprefix $(UTILS_SRC),$(UTILS_OBJ)) $(addprefix $(FS_SRC),$(FS_OBJ))
 
 all:boot
 
