@@ -42,6 +42,14 @@ char *strchr(const char *str, const int c){
 	return p;
 }
 
+uint32_t strlen(const char *str){
+	char *p = (char *)str;
+	while(*p != '\0'){
+		p++;
+	}
+	return (uint32_t)(p - str);
+}
+
 void memcpy(const void *dst, const void *src, uint32_t sz){
 	char *p_dst = (char *)dst;
 	char *p_src = (char *)src;
