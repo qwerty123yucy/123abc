@@ -4,7 +4,6 @@
 #include <mm/mman.h>
 #include <utils/io.h>
 
-
 static uint32_t *malloc_pool_front = NULL;
 static uint32_t *malloc_pool_real = NULL;
 static bool mem_inited = false;
@@ -60,7 +59,7 @@ void memcpy(const void *dst, const void *src, uint32_t sz){
 }
 
 /*
- * increase heap end by the give size
+ * increase heap end by the give size (must be 4 bytes aligned)
  * mem_alloc call this to create or increase malloc pool
  */
 
@@ -72,7 +71,7 @@ void *mem_sbrk(int incr){
 		heap_end = heap_start;
 	}
 	uint32_t heap_size = (char *)heap_end - (char *)heap_start;
-	if(incr < 0 || heap_size + incr > MAX_HEAP_SIZE){
+	if(incr < 0 || incr % 4 || heap_size + incr > MAX_HEAP_SIZE){
 		return NULL;
 	}
 	else{

@@ -18,7 +18,7 @@ LDFLAGS	+= -g --gc-sections
 LD_SCRIPT = ./boot.lds
 
 
-DEFINES = -DSTACK_SIZE=4096*4 -DMAX_HEAP_SIZE=4096*4
+DEFINES = -DSTACK_SIZE=4096*2 -DMAX_HEAP_SIZE=4096*4
 
 
 ARCH_ASM_OBJ=boot.o stack.o vectors.o loop.o
@@ -36,7 +36,10 @@ FS_FATFS_OFFICIAL_OBJ=diskio.o ff.o ffunicode.o ffsystem.o
 FS_OBJ=$(addprefix fatfs_official/source/, $(FS_FATFS_OFFICIAL_OBJ))
 FS_SRC=./fs/
 
-OBJ	:=	$(addprefix $(ARCH_SRC),$(ARCH_OBJ)) $(addprefix $(MM_SRC),$(MM_OBJ)) $(addprefix $(UTILS_SRC),$(UTILS_OBJ)) $(addprefix $(FS_SRC),$(FS_OBJ))
+THREAD_OBJ=tcb.o schedule.o
+THREAD_SRC=./thread/
+
+OBJ	:=	$(addprefix $(ARCH_SRC),$(ARCH_OBJ)) $(addprefix $(MM_SRC),$(MM_OBJ)) $(addprefix $(UTILS_SRC),$(UTILS_OBJ)) $(addprefix $(FS_SRC),$(FS_OBJ)) $(addprefix $(THREAD_SRC),$(THREAD_OBJ))
 
 all:boot
 
