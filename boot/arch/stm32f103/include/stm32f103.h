@@ -25,6 +25,9 @@
 #define GPIOC_BASE      	0x40011000U
 
 #define NVIC_BASE       	0xE000E100U
+#define STK_BASE		0xE000E010U
+#define SCB_BASE		0xE000ED00U
+			
 
 #define AFIO_BASE		(APB2PERIPH_BASE + 0x0000)
 

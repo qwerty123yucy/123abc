@@ -18,7 +18,7 @@ int tcb_init(struct tcb *tcb,
 	for(uint32_t i = 0;i < USER_REGISTER_NUM;i++){
 		tcb->registers[i] = 0;
 	}
-
+	tcb->registers[xpsr] = 0x01000000;
 	tcb->state = inactive;
 	tcb->is_queued = false;	
 	if(priority > MIN_PRIORITY){
@@ -30,26 +30,14 @@ int tcb_init(struct tcb *tcb,
 	// by calling 'tcb_resume', pc will jump to 'entry' to run this task
 	tcb->registers[pc] = entry;
 	
-	
-	if(stack_blocks == 0 || stack_blocks > MAX_TSTACK_BLOCKS){
-		tcb->stack_size = DEFAULT_TSTACK_SIZE;
+	// init stack (allocate stack in global heap)	
+	if(!tcb_init_stack(tcb, stack_blocks)){
+		tcb->registers[psp] = tcb->stack_bottom;
 	}
 	else{
-		tcb->stack_size = stack_blocks * TSTACK_BLOCK;
-	}
-	/* 
-	 * tasks' stack are allocated in heap with 4 bytes align
-	 * (mem_alloc dynamically allocate 4 bytes aligned memory in heap)
-	 * and by calling 'tcb_resume', the sp will be correctly set
-	 */
-	tcb->stack_bottom = (uint32_t)mem_alloc(tcb->stack_size);
-	if(tcb->stack_bottom == 0 || tcb->stack_bottom % 4){
-		tcb->state = destroyed;
+		// failed to allocate
 		return -1;
 	}
-	tcb->stack_bottom += tcb->stack_size;
-
-	tcb->registers[psp] = tcb->stack_bottom;
 
 	if(period > MAX_PERIOD_NUM){
 		tcb->sched_ctx.period = MAX_PERIOD_NUM;
@@ -69,15 +57,8 @@ int tcb_init(struct tcb *tcb,
 			tcb->sched_ctx.budget++;
 		}
 	}
-	/* 
-	 * set the first refill of this task. inited thread's threshold will be set to 0
-	 * which means on the first time function 'schedule' notices this task, this task
-	 * will be scheduled immediately. (but it still relates to its priority)
-	 */
-	tcb->sched_ctx.refills[0].threshold = 0;
-	tcb->sched_ctx.refills[0].amount = tcb->sched_ctx.budget;
-	tcb->sched_ctx.front = 0;
-	tcb->sched_ctx.real = tcb->sched_ctx.front + 1;
+	
+	tcb_init_sched_ctx(tcb);
 	return 0;
 }
 
@@ -93,6 +74,49 @@ void tcb_destroy(struct tcb *tcb){
 	return;
 }
 
+bool tcb_valid_sched_ctx(struct tcb *tcb){
+	return tcb->sched_ctx.period <= MAX_PERIOD_NUM 
+		&& tcb->sched_ctx.period > 0 
+		&& tcb->sched_ctx.budget <= tcb->sched_ctx.period 
+		&& tcb->sched_ctx.budget > 0;
+}
+
+
+/*
+ * set the first refill of this task. inited thread's threshold will be set to 0
+ * which means on the first time function 'schedule' notices this task, this task
+ * will be scheduled immediately. (but it still relates to its priority)
+ */
+void tcb_init_sched_ctx(struct tcb *tcb){
+	if(tcb_valid_sched_ctx(tcb)){
+		tcb->sched_ctx.refills[0].threshold = 0;
+		tcb->sched_ctx.refills[0].amount = tcb->sched_ctx.budget;
+		tcb->sched_ctx.front = 0;
+		tcb->sched_ctx.real = tcb->sched_ctx.front + 1;
+	}
+	return;
+}
+
+int tcb_init_stack(struct tcb *tcb, uint8_t stack_blocks){
+	if(stack_blocks == 0 || stack_blocks > MAX_TSTACK_BLOCKS){
+                tcb->stack_size = DEFAULT_TSTACK_SIZE;
+        }
+        else{
+                tcb->stack_size = stack_blocks * TSTACK_BLOCK;
+        }
+        /* 
+         * tasks' stack are allocated in heap with 4 bytes align
+         * (mem_alloc dynamically allocate 4 bytes aligned memory in heap)
+         */
+        tcb->stack_bottom = (uint32_t)mem_alloc(tcb->stack_size);
+        if(tcb->stack_bottom == 0 || tcb->stack_bottom % 4){
+                tcb->state = destroyed;
+                return -1;
+        }
+        tcb->stack_bottom += tcb->stack_size;
+	return 0;
+}
+
 
 void tcb_free_stack(struct tcb *tcb){
 	if(tcb_valid_stack(tcb)){
@@ -102,6 +126,7 @@ void tcb_free_stack(struct tcb *tcb){
 	}
 	return;
 }
+
 
 void tcb_suspend(struct tcb *tcb){
 	if(tcb->state == restart || tcb->state == running){
@@ -121,10 +146,7 @@ bool tcb_is_valid(struct tcb *tcb){
 	return tcb->priority <= MIN_PRIORITY &&
 		!(tcb->state == destroyed) &&
 		tcb_valid_stack(tcb) &&
-		tcb->sched_ctx.period <= MAX_PERIOD_NUM &&
-		tcb->sched_ctx.period > 0 &&
-		tcb->sched_ctx.budget <= tcb->sched_ctx.period &&
-		tcb->sched_ctx.budget > 0;
+		tcb_valid_sched_ctx(tcb);
 }
 
 

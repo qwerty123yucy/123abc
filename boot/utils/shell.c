@@ -240,7 +240,7 @@ uint32_t input_handle(const char *input_buf, uint32_t buf_sz){
 
 
 int input_parse(const char *input_buf, uint32_t sz){
-	if((sz <= 2) || (input_buf[0] == 'q' && input_buf[1] == '\n')){
+	if((sz < 2) || (input_buf[0] == 'q' && input_buf[1] == '\n')){
 		return -1;
 	}
 	else{	
@@ -298,6 +298,7 @@ int main_loop(){
 			break;
 		}
 	}
+	print_f("terminated!\n");
 	mem_free(input_buf);
 	return 0;
 }

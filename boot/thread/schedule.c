@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <utils/shell.h>
 #include <thread/schedule.h>
-
+#include <utils/io.h>
 /* 
  * all task should first be inserted into g_tasks, 
  * only after which can they be added into queues.
@@ -71,6 +71,7 @@ int tcb_add(struct tcb tcb){
 		return -1;
 	}
 	else{
+		tcb_init_sched_ctx(&tcb);
 		g_tasks.tasks[index] = tcb;
 		if(index == g_tasks.num){
 			g_tasks.num++;
@@ -176,6 +177,48 @@ static struct tcb *dequeue_wait(){
 	front->is_queued = false;
         return front;
 }
+
+#define wfi()	__asm__ volatile ("wfi\n" : : : "memory")
+
+void task_test2(){
+	int i = 0;
+	while(1){
+		if(i == 128){
+			print_f("task2 i = %lx\n", (uint32_t)i);
+		}
+		i = (i+1) % 256;
+		wfi();
+	}
+	
+
+}
+
+
+void task_test3(){
+        int i = 0;
+        while(1){
+                if(i == 128){
+                        print_f("task3 i = %lx\n", (uint32_t)i);
+                }
+                i = (i+1) % 256;
+                wfi();
+        }
+
+
+}
+void task_test4(){
+        int i = 0;
+        while(1){
+                if(i == 128){
+                        print_f("task4 i = %lx\n", (uint32_t)i);
+                }
+                i = (i+1) % 256;
+                wfi();
+        }
+
+
+}
+
 
 static int enqueue_wait(struct tcb *tcb){
         if(g_wait_queue.num >= MAX_QUEUE_SIZE + 1){
@@ -324,25 +367,47 @@ struct tcb *schedule(){
 			}
 		}
 	}
-	
 	return top_ready;
 }
 
 
 void init_task(){
 	struct tcb tcb_sh;
+	struct tcb tcb_2;
+	struct tcb tcb_3;
+	struct tcb tcb_4;
 	// create the first tcb 'main_loop'
 	// this task can run 1 systick within 1 systick
 	// stack_size: 4kB
 	// priority: 0 (highest)
 	// entry: main_loop (in utils/shell.c)
-	tcb_init(&tcb_sh, 1, 1, 4, 0, (uint32_t)main_loop);
 	
 
+	tcb_init(&tcb_sh, 24, 27, 4, 0, (uint32_t)main_loop);
+	tcb_init(&tcb_2, 1, 27, 1, 1, (uint32_t)task_test2);
+	tcb_init(&tcb_3, 1, 27, 1, 2, (uint32_t)task_test3);
+	tcb_init(&tcb_4, 1, 27, 1, 3, (uint32_t)task_test4);
+
 	int index = tcb_add(tcb_sh);
+
 	if(index >= 0){
 		tcb_activate((uint32_t)index);
 	}
+	
+	index = tcb_add(tcb_2);
+	if(index >= 0){
+                tcb_activate((uint32_t)index);
+        }
+	index = tcb_add(tcb_3);
+        if(index >= 0){
+                tcb_activate((uint32_t)index);
+        }
+	index = tcb_add(tcb_4);
+        if(index >= 0){
+                tcb_activate((uint32_t)index);
+        }
+
+
 }
 
 

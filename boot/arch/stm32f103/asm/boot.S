@@ -1,10 +1,19 @@
 #include <cpu.h>
 #include <linkage.h>
+#include <stm32f103.h>
+	.thumb
 	.text
+	.syntax unified
+ASM_FUNC(_loop)
+        wfe
+        b       _loop
+
 	.global _start 
 _start:
 	bl	init_bss
 	bl	init_data
+	bl	init_systick_priority
+	bl	init_pendSV_priority
 	
 	bl	rcc_init
 	bl	init_rtc
@@ -15,66 +24,75 @@ _start:
 	bl	init_nvic
 	bl	init_adc
 	bl 	init_dma
+	bl	init_systick
+	bl	init_task
 	b	first_schedule
 
 	
 	// call schedule to choose a runnable tcb and set g_current_tcb
 first_schedule:
-	bl 	init_task
-	bl	schedule
-	cmp	r0, #0
-	// no tasks or none of the tasks is runnable
-	beq	_loop
-	ldr	r1, =g_current_tcb
-	str	r0, [r1, #0]
-	b	tcb_resume
-	
-
-
-	// switch context to g_current_tcb
-ASM_FUNC(tcb_resume)
-	// put g_current_tcb's register list into r0
-	ldr	r0, =g_current_tcb
-	ldr	r0, [r0, #0]
-	bl	tcb_registers
-	
-	// first recover r8 - r12
-	ldr	r1, [r0, #32]
-	mov	r8, r1
-	ldr	r1, [r0, #36]
-	mov	r9, r1
-	ldr	r1, [r0, #40]
-	mov	r10, r1
-	ldr	r1, [r0, #44]
-	mov	r11, r1
-	ldr	r1, [r0, #48]
-	mov	r12, r1
-	ldr	r1, [r0, #52]
-	// using psp as tasks' sp 
-	msr	psp, r1
-	ldr	r1, [r0, #56]
-	mov 	lr, r1
-	ldr	r1, [r0, #64]
-	msr	apsr, r1
-	// set psp as current sp
-	mov	r1, #2
-	msr	control, r1
+	// change current sp to psp
+	mrs	r0, msp
+	msr	psp, r0
+	mov	r0, #2
+	msr	control, r0
 	isb
+	// just raise a pendSV then things done
+	bl	pendSV_raise
+	b	_loop
 
-	// put pc in stack in order to jump to thread with a pop
-	ldr	r1, [r0, #60]
-	push	{r1}
-	
-	ldr	r7, [r0, #28]
-	ldr	r6, [r0, #24]
-	ldr	r5, [r0, #20]
-	ldr	r4, [r0, #16]
-	ldr	r3, [r0, #12]
-	ldr	r2, [r0, #8]
-	ldr	r1, [r0, #4]
-	ldr	r0, [r0, #0]
-	// jump to g_current_tcb
-	pop	{pc}
+
+
+
+ASM_FUNC(init_pendSV_priority)
+	push	{r0, r1}
+	ldr	r0, =(SCB_BASE + SCB_SHPR_PENDSV)
+	mov	r1, #PENDSV_PRIORITY
+	strb	r1, [r0, #0]
+	pop	{r0, r1}
+	bx	lr
+
+ASM_FUNC(init_systick_priority)
+        push    {r0, r1}
+        ldr     r0, =(SCB_BASE + SCB_SHPR_SYSTICK)
+        mov     r1, #SYSTICK_PRIORITY
+        strb    r1, [r0, #0]
+        pop     {r0, r1}
+        bx      lr
+
+
+
+ASM_FUNC(pendSV_raise)
+	push	{r0, r1}
+	ldr	r0, =(SCB_BASE + SCB_ICSR)
+	ldr	r1, =SCB_ICSR_PENDSVSET
+	str	r1, [r0, #0]
+	pop	{r0, r1}
+	bx	lr
+
+ASM_FUNC(pendSV_clear_flag)
+        push    {r0, r1}
+        ldr     r0, =(SCB_BASE + SCB_ICSR)
+        ldr     r1, =SCB_ICSR_PENDSVCLR
+        str     r1, [r0, #0]
+        pop     {r0, r1}
+        bx      lr
+
+ASM_FUNC(systick_raise)
+        push    {r0, r1}
+        ldr     r0, =(SCB_BASE + SCB_ICSR)
+        ldr     r1, =SCB_ICSR_PENDSTSET
+        str     r1, [r0, #0]
+        pop     {r0, r1}
+        bx      lr
+
+ASM_FUNC(systick_clear_flag)
+        push    {r0, r1}
+        ldr     r0, =(SCB_BASE + SCB_ICSR)
+        ldr     r1, =SCB_ICSR_PENDSTCLR
+        str     r1, [r0, #0]
+        pop     {r0, r1}
+        bx      lr
 
 
 

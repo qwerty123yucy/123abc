@@ -14,7 +14,7 @@
 #define MAX_REFILL_NUM			MAX_PERIOD_NUM
 
 #define MIN_PRIORITY			(32U)	// thread with smaller priority number has higher priority
-enum user_registers {r0 = 0U, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, psp, lr, pc, apsr};
+enum user_registers {r0 = 0U, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, psp, lr, pc, xpsr};
 
 enum tcb_state {inactive = 0U, restart, running, waiting, destroyed};
 
@@ -55,8 +55,9 @@ bool tcb_is_valid(struct tcb *tcb);
 bool tcb_valid_stack(struct tcb *tcb);
 void tcb_free_stack(struct tcb *tcb);
 uint64_t tcb_threshold(struct tcb *tcb);
-
-
+bool tcb_valid_sched_ctx(struct tcb *tcb);
+void tcb_init_sched_ctx(struct tcb *tcb);
+int tcb_init_stack(struct tcb *tcb, uint8_t stack_blocks);
 #endif
 
 

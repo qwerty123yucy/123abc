@@ -18,11 +18,11 @@ LDFLAGS	+= -g --gc-sections
 LD_SCRIPT = ./boot.lds
 
 
-DEFINES = -DSTACK_SIZE=4096*2 -DMAX_HEAP_SIZE=4096*4
+DEFINES = -DSTACK_SIZE=4096*2 -DMAX_HEAP_SIZE=4096*8
 
 
 ARCH_ASM_OBJ=boot.o stack.o vectors.o loop.o
-ARCH_OBJ=$(addprefix asm/, $(ARCH_ASM_OBJ)) usart.o rcc.o gpio.o exti.o afio.o nvic.o timer.o pwr.o rtc.o adc.o dma.o spi.o spi_flash.o
+ARCH_OBJ=$(addprefix asm/, $(ARCH_ASM_OBJ)) usart.o rcc.o gpio.o exti.o afio.o nvic.o timer.o pwr.o rtc.o adc.o dma.o spi.o spi_flash.o systick.o
 ARCH_SRC=./arch/stm32f103/
 
 MM_OBJ=mman.o
