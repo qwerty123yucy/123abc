@@ -5,7 +5,7 @@
 static struct usart_t serial;
 
 // using this function to calculate USART_BRR value, but it seems wrong.
-uint32_t calculate_brr(uint32_t baud_rate, uint32_t base_clk, uint32_t oversampling){
+static uint32_t calculate_brr(uint32_t baud_rate, uint32_t base_clk, uint32_t oversampling){
 	uint32_t tmp_res = (base_clk * 100) / (baud_rate * oversampling);
 	uint32_t tmp_int = tmp_res / 100;
 	uint32_t tmp_frac = (((tmp_res % 100) * oversampling) + 50) / 100;
@@ -13,17 +13,17 @@ uint32_t calculate_brr(uint32_t baud_rate, uint32_t base_clk, uint32_t oversampl
 	return ((tmp_int << 4) | tmp_frac);
 }
 
-void wait_tx_ready(struct usart_t *dev){
+static void wait_tx_ready(struct usart_t *dev){
 	while( !(raw_readl((void *)(dev->base_addr + USART_SR)) & USART_SR_TXE) ){};
 	return;
 }
 
-void wait_rx_ready(struct usart_t *dev){
+static void wait_rx_ready(struct usart_t *dev){
 	while( !(raw_readl((void *)(dev->base_addr + USART_SR)) & USART_SR_RXNE) ){};
 	return;
 }
 
-void usart_setup(struct usart_t *dev){
+static void usart_setup(struct usart_t *dev){
 	dev->base_addr = USART1_BASE;
 	dev->baud_rate = BAUD_RATE;
 	dev->data_bits = DATA_BITS;
@@ -32,7 +32,7 @@ void usart_setup(struct usart_t *dev){
 	return;
 }
 
-void usart_reset(struct usart_t *dev){
+static void usart_reset(struct usart_t *dev){
 	// first, we disable usart before configuring
 	uint32_t cr1 = raw_readl((void *)(dev->base_addr + USART_CR1));
 	cr1 &= ~USART_CR1_UE;

@@ -41,13 +41,6 @@
 #define DAY_OF_SEC(sec)				(sec / SEC_IN_DAY)
 
 
-// given the day number in a year, return its month and the day_idx in this month
-// if is_leap, then day should be between 0-365, otherwise it should be between 0-364
-// the mon_idx returned is between 0-11 indicating month 1-12
-// 15..8: mon_idx  7..0: day_idx
-uint16_t mon_of_day(int day, bool is_leap);
-
-
 struct date_t {
 	uint16_t year;
 	uint8_t mon;

@@ -17,7 +17,7 @@
 
 #define NVIC_STIR	(0xE00)
 
-
+void init_nvic();
 
 
 

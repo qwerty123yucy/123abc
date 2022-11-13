@@ -210,7 +210,7 @@ static struct builtin_cmd cmd_list[BUILTIN_CMD_NUM] = {
 
 
 // a toy without parse of special characters
-uint32_t input_handle(const char *input_buf, uint32_t buf_sz){
+static uint32_t input_handle(const char *input_buf, uint32_t buf_sz){
 	static uint32_t sz = 0; uint32_t end_sz = 0;
 	char tmp; char *p = (char *)input_buf + sz;
 	for(;;){
@@ -239,7 +239,7 @@ uint32_t input_handle(const char *input_buf, uint32_t buf_sz){
 }
 
 
-int input_parse(const char *input_buf, uint32_t sz){
+static int input_parse(const char *input_buf, uint32_t sz){
 	if((sz < 2) || (input_buf[0] == 'q' && input_buf[1] == '\n')){
 		return -1;
 	}

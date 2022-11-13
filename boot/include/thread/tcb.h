@@ -52,12 +52,9 @@ int tcb_init(struct tcb *tcb,
 void tcb_destroy(struct tcb *tcb);
 void tcb_suspend(struct tcb *tcb);
 bool tcb_is_valid(struct tcb *tcb);
-bool tcb_valid_stack(struct tcb *tcb);
 void tcb_free_stack(struct tcb *tcb);
-uint64_t tcb_threshold(struct tcb *tcb);
-bool tcb_valid_sched_ctx(struct tcb *tcb);
 void tcb_init_sched_ctx(struct tcb *tcb);
-int tcb_init_stack(struct tcb *tcb, uint8_t stack_blocks);
+uint64_t tcb_threshold(struct tcb *tcb);
 #endif
 
 

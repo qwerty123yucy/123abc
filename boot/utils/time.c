@@ -9,7 +9,7 @@ static uint8_t day_of_mon[12] = {31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 // if is_leap, then day should be between 0-365, otherwise it should be between 0-364
 // the mon_idx returned is between 0-11 indicating month 1-12
 // bit 15..8: mon_idx  7..0: day_idx
-uint16_t mon_of_day(int day, bool is_leap){
+static uint16_t mon_of_day(int day, bool is_leap){
 	int index = -1;
 	if(day < 0 || day >= (int)DAY_IN_COMMON_YEAR){
 		if(!(is_leap && day == DAY_IN_COMMON_YEAR)){

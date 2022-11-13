@@ -4,64 +4,6 @@
 
 
 
-/* 
- * stack_size 0: DEFAULT_THREAD_STACK_SIZE; n: n kB
- * this function will let thread be in 'inactive' state
- * inited tcb are allocated with its stack,
- * and are able to add into g_tasks
- */
-int tcb_init(struct tcb *tcb, 
-		uint8_t budget, uint8_t period, 
-		uint8_t stack_blocks, uint8_t priority,
-		uint32_t entry){
-	// since this is a new task, its register context are reset
-	for(uint32_t i = 0;i < USER_REGISTER_NUM;i++){
-		tcb->registers[i] = 0;
-	}
-	tcb->registers[xpsr] = 0x01000000;
-	tcb->state = inactive;
-	tcb->is_queued = false;	
-	if(priority > MIN_PRIORITY){
-		tcb->priority = MIN_PRIORITY;
-	}
-	else{
-		tcb->priority = priority;
-	}
-	// by calling 'tcb_resume', pc will jump to 'entry' to run this task
-	tcb->registers[pc] = entry;
-	
-	// init stack (allocate stack in global heap)	
-	if(!tcb_init_stack(tcb, stack_blocks)){
-		tcb->registers[psp] = tcb->stack_bottom;
-	}
-	else{
-		// failed to allocate
-		return -1;
-	}
-
-	if(period > MAX_PERIOD_NUM){
-		tcb->sched_ctx.period = MAX_PERIOD_NUM;
-	}
-	else{
-		tcb->sched_ctx.period = period;
-		if(tcb->sched_ctx.period == 0){
-			tcb->sched_ctx.period++;
-		}
-	}
-	if(budget > tcb->sched_ctx.period){
-		tcb->sched_ctx.budget = tcb->sched_ctx.period;
-	}
-	else{
-		tcb->sched_ctx.budget = budget;
-		if(tcb->sched_ctx.budget == 0){
-			tcb->sched_ctx.budget++;
-		}
-	}
-	
-	tcb_init_sched_ctx(tcb);
-	return 0;
-}
-
 void tcb_destroy(struct tcb *tcb){
 	if(tcb->state == inactive){
 		tcb->state = destroyed;
@@ -74,7 +16,7 @@ void tcb_destroy(struct tcb *tcb){
 	return;
 }
 
-bool tcb_valid_sched_ctx(struct tcb *tcb){
+static bool tcb_valid_sched_ctx(struct tcb *tcb){
 	return tcb->sched_ctx.period <= MAX_PERIOD_NUM 
 		&& tcb->sched_ctx.period > 0 
 		&& tcb->sched_ctx.budget <= tcb->sched_ctx.period 
@@ -97,7 +39,7 @@ void tcb_init_sched_ctx(struct tcb *tcb){
 	return;
 }
 
-int tcb_init_stack(struct tcb *tcb, uint8_t stack_blocks){
+static int tcb_init_stack(struct tcb *tcb, uint8_t stack_blocks){
 	if(stack_blocks == 0 || stack_blocks > MAX_TSTACK_BLOCKS){
                 tcb->stack_size = DEFAULT_TSTACK_SIZE;
         }
@@ -118,15 +60,6 @@ int tcb_init_stack(struct tcb *tcb, uint8_t stack_blocks){
 }
 
 
-void tcb_free_stack(struct tcb *tcb){
-	if(tcb_valid_stack(tcb)){
-		mem_free((void *)(tcb->stack_bottom - tcb->stack_size));
-		// make sure the tcb's stack becomes invalid after tcb_free_stack
-		tcb->stack_bottom = 0;
-	}
-	return;
-}
-
 
 void tcb_suspend(struct tcb *tcb){
 	if(tcb->state == restart || tcb->state == running){
@@ -135,12 +68,22 @@ void tcb_suspend(struct tcb *tcb){
 	return;
 }
 
-bool tcb_valid_stack(struct tcb *tcb){
+static bool tcb_valid_stack(struct tcb *tcb){
 	return !(tcb->stack_size % TSTACK_BLOCK) 
 				&& tcb->stack_size > 0
                                 && (tcb->stack_bottom > tcb->stack_size) 
 				&& !(tcb->stack_bottom % 4);
 }
+
+void tcb_free_stack(struct tcb *tcb){
+        if(tcb_valid_stack(tcb)){
+                mem_free((void *)(tcb->stack_bottom - tcb->stack_size));
+                // make sure the tcb's stack becomes invalid after tcb_free_stack
+                tcb->stack_bottom = 0;
+        }
+        return;
+}
+
 
 bool tcb_is_valid(struct tcb *tcb){
 	return tcb->priority <= MIN_PRIORITY &&
@@ -156,6 +99,66 @@ uint64_t tcb_threshold(struct tcb *tcb){
 
 uint32_t *tcb_registers(struct tcb *tcb){
 	return tcb->registers;
+}
+
+
+
+/* 
+ * stack_size 0: DEFAULT_THREAD_STACK_SIZE; n: n kB
+ * this function will let thread be in 'inactive' state
+ * inited tcb are allocated with its stack,
+ * and are able to add into g_tasks
+ */
+int tcb_init(struct tcb *tcb,
+                uint8_t budget, uint8_t period,
+                uint8_t stack_blocks, uint8_t priority,
+                uint32_t entry){
+        // since this is a new task, its register context are reset
+        for(uint32_t i = 0;i < USER_REGISTER_NUM;i++){
+                tcb->registers[i] = 0;
+        }
+        tcb->registers[xpsr] = 0x01000000;
+        tcb->state = inactive;
+        tcb->is_queued = false;
+        if(priority > MIN_PRIORITY){
+                tcb->priority = MIN_PRIORITY;
+        }
+        else{
+                tcb->priority = priority;
+        }
+        // by calling 'tcb_resume', pc will jump to 'entry' to run this task
+        tcb->registers[pc] = entry;
+
+        // init stack (allocate stack in global heap)   
+        if(!tcb_init_stack(tcb, stack_blocks)){
+                tcb->registers[psp] = tcb->stack_bottom;
+        }
+        else{
+                // failed to allocate
+                return -1;
+        }
+
+        if(period > MAX_PERIOD_NUM){
+                tcb->sched_ctx.period = MAX_PERIOD_NUM;
+        }
+        else{
+                tcb->sched_ctx.period = period;
+                if(tcb->sched_ctx.period == 0){
+                        tcb->sched_ctx.period++;
+                }
+        }
+        if(budget > tcb->sched_ctx.period){
+                tcb->sched_ctx.budget = tcb->sched_ctx.period;
+        }
+        else{
+                tcb->sched_ctx.budget = budget;
+                if(tcb->sched_ctx.budget == 0){
+                        tcb->sched_ctx.budget++;
+                }
+        }
+
+        tcb_init_sched_ctx(tcb);
+        return 0;
 }
 
 

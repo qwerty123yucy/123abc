@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 // rtc regs need to be read after RTC_CRL_RSF bit is set to ensure value we get is correct
-uint32_t read_rtc_reg(uint32_t rtc_reg_offset){
+static uint32_t read_rtc_reg(uint32_t rtc_reg_offset){
         uint32_t crl;
         // check whether the offset is within rtc regs and valid
         if(rtc_reg_offset > RTC_ALRL || rtc_reg_offset & 0x3){
@@ -24,7 +24,7 @@ uint32_t read_rtc_reg(uint32_t rtc_reg_offset){
 }
 
 // writing to rtc regs has pre-conditions, using this function to to ensure safe writting
-void write_rtc_reg(uint32_t rtc_reg_offset, uint32_t val){
+static void write_rtc_reg(uint32_t rtc_reg_offset, uint32_t val){
 	uint32_t crl;
 	// check whether the offset is within rtc regs and valid
 	if(rtc_reg_offset > RTC_ALRL || rtc_reg_offset & 0x3){

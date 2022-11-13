@@ -32,15 +32,29 @@ static struct {
  * (items in both queue are pointers to items in g_tasks),
  * however, when function 'schedule' notices them, they will be removed directly from queue 
  */
- 
-static struct {
+
+static bool priority_cmp_ready(struct tcb *a, struct tcb *b){
+        return (a->priority == b->priority) ? (a < b) : (a->priority < b->priority);
+}
+
+static bool priority_cmp_wait(struct tcb *a, struct tcb *b){
+        uint64_t threshold_a = tcb_threshold(a);
+        uint64_t threshold_b = tcb_threshold(b);
+        return (threshold_a == threshold_b) ? (a < b) : (threshold_a < threshold_b);
+}
+
+
+static struct tcb_queue {
 	/* 
 	 * use 'small top heap' to implement priority queue
 	 * priority queue starts at index '1' to ease operation on heap
 	 */ 
 	struct tcb *queue[MAX_QUEUE_SIZE + 1];
 	uint32_t num;
-} g_ready_queue = {.num = 1}, g_wait_queue = {.num = 1};
+	bool (*priority_cmp)(struct tcb *a, struct tcb *b);
+	
+} g_ready_queue = {.num = 1, .priority_cmp = priority_cmp_ready}, 
+	g_wait_queue = {.num = 1, .priority_cmp = priority_cmp_wait};
 
 
 // records total schedule times since boot, 
@@ -60,7 +74,8 @@ int tcb_add(struct tcb tcb){
 	uint32_t index = 0;
 	for(;index <= g_tasks.num;index++){
 		if(index == g_tasks.num 
-				|| (!tcb_is_valid(&(g_tasks.tasks[index])) && !g_tasks.tasks[index].is_queued)){
+				|| (!tcb_is_valid(&(g_tasks.tasks[index])) 
+					&& !g_tasks.tasks[index].is_queued)){
 			// invalid tasks won't be covered by new tasks,
 			// unless they are turely removed from queues (dequeue will unset tcbs' is_queued flag)
 			break;
@@ -82,30 +97,32 @@ int tcb_add(struct tcb tcb){
 }
 
 
-static int enqueue_ready(struct tcb *tcb){
-	if(g_ready_queue.num >= MAX_QUEUE_SIZE + 1){
+static int enqueue(struct tcb *tcb, struct tcb_queue *queue){
+	if(queue->num >= MAX_QUEUE_SIZE + 1){
 		return -1;
 	}
-	uint32_t index = g_ready_queue.num;
-	g_ready_queue.queue[g_ready_queue.num++] = tcb;
+	uint32_t index = queue->num;
+	queue->queue[queue->num++] = tcb;
 	for(uint32_t i = index / 2;i > 0;i /= 2){
-		// g_ready_queue using tcb's priority as priority 
+		// g_ready_queue uses tcb's priority as priority
+		// g_wait_queue uses threshold as priority
 		// to ensure task with smaller priority value will be served earlier
+		// and task with smaller threshold will be added into g_ready_queue as soon as possible
 		if(2 * i + 1 <= index && 
-				g_ready_queue.queue[i]->priority 
-				> g_ready_queue.queue[2 * i + 1]->priority){
+				queue->priority_cmp(queue->queue[2 * i + 1], 
+					queue->queue[i])){
 			
-			struct tcb *tmp = g_ready_queue.queue[i];
-			g_ready_queue.queue[i] = g_ready_queue.queue[2 * i + 1];
-			g_ready_queue.queue[2 * i + 1] = tmp;
+			struct tcb *tmp = queue->queue[i];
+			queue->queue[i] = queue->queue[2 * i + 1];
+			queue->queue[2 * i + 1] = tmp;
 		}
 		if(2 * i <= index &&
-				g_ready_queue.queue[i]->priority 
-				> g_ready_queue.queue[2 * i]->priority){
+				queue->priority_cmp(queue->queue[2 * i], 
+					queue->queue[i])){
 			
-			struct tcb *tmp = g_ready_queue.queue[i];
-			g_ready_queue.queue[i] = g_ready_queue.queue[2 * i];
-			g_ready_queue.queue[2 * i] = tmp;
+			struct tcb *tmp = queue->queue[i];
+			queue->queue[i] = queue->queue[2 * i];
+			queue->queue[2 * i] = tmp;
 		}
 	}
 	tcb->is_queued = true;
@@ -114,143 +131,54 @@ static int enqueue_ready(struct tcb *tcb){
 	
 }
 
-static struct tcb *dequeue_ready(){
-	if(g_ready_queue.num <= 1){
+static int enqueue_ready(struct tcb *tcb){
+	return enqueue(tcb, &g_ready_queue);
+}
+
+static int enqueue_wait(struct tcb *tcb){
+	return enqueue(tcb, &g_wait_queue);
+}
+
+
+static struct tcb *dequeue(struct tcb_queue *queue){
+	if(queue->num <= 1){
 		return NULL;
 	}
-	struct tcb *front = g_ready_queue.queue[1];
-	g_ready_queue.queue[1] = g_ready_queue.queue[--(g_ready_queue.num)];
+	struct tcb *front = queue->queue[1];
+	queue->queue[1] = queue->queue[--(queue->num)];
 	
-	if(g_ready_queue.num > 2){
-		struct tcb *top = g_ready_queue.queue[1];
+	if(queue->num > 2){
+		struct tcb *top = queue->queue[1];
 		uint32_t i = 1;
-		while(i * 2 < g_ready_queue.num){
+		while(i * 2 < queue->num){
 			uint32_t k = i * 2;
-			if((i * 2 + 1) < g_ready_queue.num 
-					&& g_ready_queue.queue[2 * i]->priority
-					>= g_ready_queue.queue[2 * i + 1]->priority){
+			if((i * 2 + 1) < queue->num 
+					&& !queue->priority_cmp(queue->queue[2 * i], 
+						queue->queue[2 * i + 1])){
 				k++;
 			}
-			if(top->priority > g_ready_queue.queue[k]->priority){
-				g_ready_queue.queue[i] = g_ready_queue.queue[k];
+			if(queue->priority_cmp(queue->queue[k], top)){
+				queue->queue[i] = queue->queue[k];
 				i = k;
 			}
 			else{
 				break;
 			}
 		}
-		g_ready_queue.queue[i] = top;
+		queue->queue[i] = top;
 	}
 	front->is_queued = false;
 	
 	return front;
 }
 
+static struct tcb *dequeue_ready(){
+	return dequeue(&g_ready_queue);
+}
+
 static struct tcb *dequeue_wait(){
-        if(g_wait_queue.num <= 1){
-                return NULL;
-        }
-        struct tcb *front = g_wait_queue.queue[1];
-        g_wait_queue.queue[1] = g_wait_queue.queue[--(g_wait_queue.num)];
-
-        if(g_wait_queue.num > 2){
-                struct tcb *top = g_wait_queue.queue[1];
-                uint32_t i = 1;
-                while(i * 2 < g_wait_queue.num){
-                        uint32_t k = i * 2;
-                        if((i * 2 + 1) < g_wait_queue.num
-                                        && tcb_threshold(g_wait_queue.queue[2 * i]) 
-                                        >= tcb_threshold(g_wait_queue.queue[2 * i + 1])){
-                                k++;
-                        }
-                        if(tcb_threshold(top) > tcb_threshold(g_wait_queue.queue[k])){
-                                g_wait_queue.queue[i] = g_wait_queue.queue[k];
-                                i = k;
-                        }
-                        else{
-                                break;
-                        }
-                }
-                g_wait_queue.queue[i] = top;
-        }
-
-	front->is_queued = false;
-        return front;
+	return dequeue(&g_wait_queue);
 }
-
-#define wfi()	__asm__ volatile ("wfi\n" : : : "memory")
-
-void task_test2(){
-	int i = 0;
-	while(1){
-		if(i == 128){
-			print_f("task2 i = %lx\n", (uint32_t)i);
-		}
-		i = (i+1) % 256;
-		wfi();
-	}
-	
-
-}
-
-
-void task_test3(){
-        int i = 0;
-        while(1){
-                if(i == 128){
-                        print_f("task3 i = %lx\n", (uint32_t)i);
-                }
-                i = (i+1) % 256;
-                wfi();
-        }
-
-
-}
-void task_test4(){
-        int i = 0;
-        while(1){
-                if(i == 128){
-                        print_f("task4 i = %lx\n", (uint32_t)i);
-                }
-                i = (i+1) % 256;
-                wfi();
-        }
-
-
-}
-
-
-static int enqueue_wait(struct tcb *tcb){
-        if(g_wait_queue.num >= MAX_QUEUE_SIZE + 1){
-                return -1;
-        }
-        uint32_t index = g_wait_queue.num;
-        g_wait_queue.queue[g_wait_queue.num++] = tcb;
-        for(uint32_t i = index / 2;i > 0;i /= 2){
-		// g_wait_queue using the threshold of task as priority
-		// to ensure task with lower threshold will be added into g_ready_queue earlier
-                if(2 * i + 1 <= index &&
-                                tcb_threshold(g_wait_queue.queue[i]) 
-				> tcb_threshold(g_wait_queue.queue[2 * i + 1])){
-                        
-			struct tcb *tmp = g_wait_queue.queue[i];
-                        g_wait_queue.queue[i] = g_wait_queue.queue[2 * i + 1];
-                        g_wait_queue.queue[2 * i + 1] = tmp;
-                }
-                if(2 * i <= index &&
-                                tcb_threshold(g_wait_queue.queue[i]) 
-				> tcb_threshold(g_wait_queue.queue[2 * i])){
-                        
-			struct tcb *tmp = g_wait_queue.queue[i];
-                        g_wait_queue.queue[i] = g_wait_queue.queue[2 * i];
-                        g_wait_queue.queue[2 * i] = tmp;
-                }
-        }
-
-	tcb->is_queued = true;
-        return 0;
-}
-
 
 static struct tcb *first_ready(){
 	if(g_ready_queue.num > 1){
@@ -270,7 +198,8 @@ static struct tcb *first_wait(){
 // add a task in g_tasks.tasks into g_queue according to the given 'index' in g_tasks
 // this function is the only way to add tcb into queues
 int tcb_activate(uint32_t index){
-	if(index >= g_tasks.num || g_tasks.tasks[index].is_queued || !g_tasks.tasks[index].state == inactive){
+	if(index >= g_tasks.num || g_tasks.tasks[index].is_queued 
+			|| !g_tasks.tasks[index].state == inactive){
 		// tcb with running or restart state is already in the g_queue
 		return -1;
 	}
@@ -357,7 +286,8 @@ struct tcb *schedule(){
 		}
 		else{
 			dequeue_ready();
-			if(top_ready->state == running || top_ready->state == restart){
+			if(top_ready->state == running 
+					|| top_ready->state == restart){
 				// this task already exhausted its budget
 				top_ready->state = waiting;
 				enqueue_wait(top_ready);
@@ -370,44 +300,20 @@ struct tcb *schedule(){
 	return top_ready;
 }
 
-
 void init_task(){
-	struct tcb tcb_sh;
-	struct tcb tcb_2;
-	struct tcb tcb_3;
-	struct tcb tcb_4;
+	struct tcb tcb;
 	// create the first tcb 'main_loop'
 	// this task can run 1 systick within 1 systick
 	// stack_size: 4kB
 	// priority: 0 (highest)
 	// entry: main_loop (in utils/shell.c)
-	
+	tcb_init(&tcb, 1, 2, 4, 0, (uint32_t)main_loop);
 
-	tcb_init(&tcb_sh, 24, 27, 4, 0, (uint32_t)main_loop);
-	tcb_init(&tcb_2, 1, 27, 1, 1, (uint32_t)task_test2);
-	tcb_init(&tcb_3, 1, 27, 1, 2, (uint32_t)task_test3);
-	tcb_init(&tcb_4, 1, 27, 1, 3, (uint32_t)task_test4);
-
-	int index = tcb_add(tcb_sh);
-
+	int index = tcb_add(tcb);
 	if(index >= 0){
 		tcb_activate((uint32_t)index);
 	}
-	
-	index = tcb_add(tcb_2);
-	if(index >= 0){
-                tcb_activate((uint32_t)index);
-        }
-	index = tcb_add(tcb_3);
-        if(index >= 0){
-                tcb_activate((uint32_t)index);
-        }
-	index = tcb_add(tcb_4);
-        if(index >= 0){
-                tcb_activate((uint32_t)index);
-        }
-
-
+	return;
 }
 
 

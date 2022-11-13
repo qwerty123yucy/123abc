@@ -63,7 +63,7 @@ void memcpy(const void *dst, const void *src, uint32_t sz){
  * mem_alloc call this to create or increase malloc pool
  */
 
-void *mem_sbrk(int incr){
+static void *mem_sbrk(int incr){
 	extern char stack__end;
 	void *heap_start = &stack__end;
 	static void *heap_end = NULL;
@@ -81,15 +81,15 @@ void *mem_sbrk(int incr){
 	}
 }
 
-bool valid_head_size(uint32_t *head){
+static bool valid_head_size(uint32_t *head){
 	return get_block_size(*head) > 0;	
 }
 
-bool valid_head_flag(uint32_t *head){
+static bool valid_head_flag(uint32_t *head){
 	return get_block_mask(*head) <= 1;
 }
 
-bool valid_head(uint32_t *head){
+static bool valid_head(uint32_t *head){
 	return valid_head_size(head) && valid_head_flag(head);
 }
 
@@ -97,7 +97,7 @@ bool valid_head(uint32_t *head){
  * get the addr of the next block head by the given block head
  * continously calling next head ends at malloc_pool_real 
  */
-uint32_t *next_head(uint32_t *head){
+static uint32_t *next_head(uint32_t *head){
 	return (uint32_t *)((char *)head + get_block_size(*head));
 }
 
@@ -106,11 +106,11 @@ uint32_t *next_head(uint32_t *head){
  * we can get the tail of this block.
  * useful when handle free blocks
  */
-uint32_t *block_tail(uint32_t *head){
+static uint32_t *block_tail(uint32_t *head){
 	return (next_head(head) - 1);
 }
 
-uint32_t *get_head_of_tail(uint32_t *tail){
+static uint32_t *get_head_of_tail(uint32_t *tail){
 	return (uint32_t *)((char *)tail - get_block_size(*tail)) + 1;
 }
 
@@ -118,7 +118,7 @@ uint32_t *get_head_of_tail(uint32_t *tail){
  * call sbrk to get malloc pool and init the front, real 
  * and head of the free block with its tail filled
  */
-void mem_init(){
+static void mem_init(){
 	malloc_pool_front = (uint32_t *)mem_sbrk(CHUNK_SIZE);
 	if(malloc_pool_front == NULL){
 		return;
@@ -160,7 +160,7 @@ void mem_free(void *addr){
 	return;
 }
 
-uint32_t *extend_malloc_pool(){
+static uint32_t *extend_malloc_pool(){
 	void *start = mem_sbrk(CHUNK_SIZE);
 	if(start == NULL){
 		return NULL;

@@ -9,7 +9,7 @@
 static bool spi_flash_inited = false;
 static bool spi_flash_enabled = false;
 
-void spi_flash_init(){
+static void spi_flash_init(){
 	if(spi_flash_inited){
 		return;
 	}

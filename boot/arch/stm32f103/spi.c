@@ -108,7 +108,7 @@ void spi_setup(enum spi_periph periph, struct spi_cfg *cfg){
 	return;
 }
 
-enum spi_mode spi_get_mode(enum spi_periph periph){
+static enum spi_mode spi_get_mode(enum spi_periph periph){
 	if(raw_readl((void *)(periph + SPI_CR1)) & SPI_CR1_MSTR){
 		return spi_master;
 	}
@@ -117,7 +117,7 @@ enum spi_mode spi_get_mode(enum spi_periph periph){
 	}
 }
 
-enum spi_trans_mode spi_get_trans_mode(enum spi_periph periph){
+static enum spi_trans_mode spi_get_trans_mode(enum spi_periph periph){
 	uint32_t cr1 = raw_readl((void *)(periph + SPI_CR1));
 	if(cr1 & SPI_CR1_BIDMODE){
 		if(cr1 & SPI_CR1_BIDIOE){
@@ -138,17 +138,17 @@ enum spi_trans_mode spi_get_trans_mode(enum spi_periph periph){
 	}
 }
 
-void spi_wait_tx(enum spi_periph periph){
+static void spi_wait_tx(enum spi_periph periph){
 	while(!(raw_readl((void *)(periph + SPI_SR)) & SPI_SR_TXE)){};
 	return;
 }
 
-void spi_wait_rx(enum spi_periph periph){
+static void spi_wait_rx(enum spi_periph periph){
 	while(!(raw_readl((void *)(periph + SPI_SR)) & SPI_SR_RXNE)){}
 	return;
 }
 
-void spi_wait_bsy(enum spi_periph periph){
+static void spi_wait_bsy(enum spi_periph periph){
 	while(raw_readl((void *)(periph + SPI_SR)) & SPI_SR_BSY){}
 	return;
 }
