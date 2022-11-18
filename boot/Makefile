@@ -45,7 +45,7 @@ all:boot
 
 boot:$(OBJ)
 	$(LD) -o $@ $(OBJ) $(LDFLAGS) -script $(LD_SCRIPT)
-	#rm -f $(OBJ)
+	rm -f $(OBJ)
 
 %.o:%.S
 	$(CC) -D__ASSEMBLY__ $(CFLAGS) $(DEFINES) -c -o $@ $<
