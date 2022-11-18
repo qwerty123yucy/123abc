@@ -88,6 +88,9 @@ _pendSV_handler:
 	pop	{r4-r11}
 	b	next_schedule
 
+	// save all the context for g_current_tcb
+	// if g_current_tcb is 'NULL' (it is the first time to schedule for a task),
+	// then this part will be skipped
 save_context:
 	// save r4-r11 for g_current_tcb
 	// get g_current_tcb's reglist addr
@@ -153,9 +156,9 @@ next_schedule:
 	dmb
 
 	// now we resume to the new g_current_tcb
-	// the method is first recovering r4-r11,
-	// and then putting r0-r3, lr, pc, xpsr into psp
-	// after which we can resume to g_current_tcb with a bx lr
+	// the method first recovers r4-r11,
+	// and then puts r0-r3, lr, pc, xpsr into psp
+	// after which we can resume to g_current_tcb with a 'bx lr'
 tcb_resume:
 	// first we should clear systick and enable its interrupt
 	bl	systick_clear
@@ -198,7 +201,7 @@ tcb_resume:
 	ldr	r3, =0xfffffffe
 	and	r2, r2, r3
 	str	r2, [r1, #24]
-	ldr	r2, [r0, #64]
+	ldr	r2, [r0, #64]	// xpsr
 	str	r2, [r1, #28]
 	isb
 	// now r0-r3, r12, lr, pc, xpsr are under psp, r4-r11 are recovered,

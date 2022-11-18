@@ -9,16 +9,16 @@ CFLAGS  = -fno-stack-protector -fno-builtin -nostdlib -ffreestanding
 CFLAGS	+= -ffunction-sections -fdata-sections
 CFLAGS	+= -fno-pic -fno-pie
 CFLAGS	+= -I./arch/stm32f103/include/ -I./include/ -I./fs/fatfs_official/source
-CFLAGS  += -g -O3 -mcpu=cortex-m3 -std=c17 
-CFLAGS	+= -Wall -Wextra -Werror
+CFLAGS  += -g -O3 -mcpu=cortex-m3 -std=c2x -pedantic
+CFLAGS	+= -Wall -Wextra -Werror -pipe
 
 # libgcc.a is used to calculate float or double values
-LDFLAGS = -static -L/usr/lib/gcc/arm-none-eabi/12.2.0/thumb/v7-m/nofp/ -lgcc
-LDFLAGS	+= -g --gc-sections
+LDFLAGS = -static -L/usr/lib/gcc/arm-none-eabi/12/thumb/v7-m/nofp/ -lgcc
+LDFLAGS	+= -O3 -g --gc-sections
 LD_SCRIPT = ./boot.lds
 
 
-DEFINES = -DSTACK_SIZE=4096*2 -DMAX_HEAP_SIZE=4096*8
+DEFINES = -DSTACK_SIZE=4096 -DMAX_HEAP_SIZE=4096*4
 
 
 ARCH_ASM_OBJ=boot.o stack.o vectors.o loop.o
@@ -45,7 +45,7 @@ all:boot
 
 boot:$(OBJ)
 	$(LD) -o $@ $(OBJ) $(LDFLAGS) -script $(LD_SCRIPT)
-	rm -f $(OBJ)
+	#rm -f $(OBJ)
 
 %.o:%.S
 	$(CC) -D__ASSEMBLY__ $(CFLAGS) $(DEFINES) -c -o $@ $<

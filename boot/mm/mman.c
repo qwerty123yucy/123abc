@@ -204,7 +204,9 @@ void *mem_alloc(uint32_t size){
 				}
 				else{
 					//  the target size is nearly the block size. directly use this block
-					if( (get_block_size(*head) == target_block_size) || (get_block_size(*head) / (get_block_size(*head) - target_block_size)) > 4 ){
+					if( (get_block_size(*head) == target_block_size) 
+							|| (get_block_size(*head) / (get_block_size(*head) 
+									- target_block_size)) > 4 ){
 						*head |= BLOCK_USED;
 						*block_tail(head) = *head;
 					}

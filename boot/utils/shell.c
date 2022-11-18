@@ -210,29 +210,33 @@ static struct builtin_cmd cmd_list[BUILTIN_CMD_NUM] = {
 
 
 // a toy without parse of special characters
-static uint32_t input_handle(const char *input_buf, uint32_t buf_sz){
+static int input_handle(const char *input_buf, uint32_t buf_sz){
 	static uint32_t sz = 0; uint32_t end_sz = 0;
 	char tmp; char *p = (char *)input_buf + sz;
 	for(;;){
-		//buf size is not enough. return 0 to let main loop call realloc
 		if(sz > buf_sz - 2){
-			return 0;	
+			//buf size is not enough. return 0 to let main loop call realloc
+			return -1;	
 		}
 		else{
 			tmp = getc();
-			if(tmp == '\r'){
-				*p++ = '\n';
-				*p = '\0';
-				end_sz = sz + 2;    //the '\n' and '\0' is counted
-				sz = 0;
-				print_f("\n");
-				return end_sz;
-
-			}
-			else{
-				*p++ = tmp;
-				sz++;
-				print_f("%c", tmp);
+			switch(tmp){
+				case '\r':
+					*p++ = '\n';
+					*p = '\0';
+					end_sz = sz + 2;    //the '\n' and '\0' is counted
+					sz = 0;
+					print_f("\n");
+					return (int)end_sz;
+				case (char)(0x03):
+					print_f("\n");
+					sz = 0;
+					return (int)sz;
+				default:
+					*p++ = tmp;
+	                                sz++;
+        	                        print_f("%c", tmp);
+					break;
 			}
 		}
 	}
@@ -276,7 +280,7 @@ int main_loop(){
 	print_f("hello stm32!\n");
 	uint32_t buf_sz = INPUT_BUF_BLOCK_SIZE;
 	char *input_buf = (char *)mem_alloc(sizeof(char) * buf_sz);
-	uint32_t sz = 0;
+	int sz = 0;
 	char *msg = "[shell]: "; int ret;
 	if(input_buf == NULL){
 		print_f("failed to init shell!\n");
@@ -284,16 +288,20 @@ int main_loop(){
 	}
 	for(;;){
 		print_f("%s", msg);
-		while ((sz = input_handle(input_buf, buf_sz)) == 0){
+		while ((sz = input_handle(input_buf, buf_sz)) == -1){
 			buf_sz += INPUT_BUF_BLOCK_SIZE;
+			char *old_buf = input_buf;
 			input_buf = mem_realloc(input_buf, buf_sz);
 			if(input_buf == NULL){
+				mem_free((void *)old_buf);
 				print_f("failed to realloc buf for input!\n");
 				return -1;
 			}
 		}
-
-		ret = input_parse(input_buf, sz);
+		if(sz == 0){
+			continue;
+		}
+		ret = input_parse(input_buf, (uint32_t)sz);
 		if(ret == -1){
 			break;
 		}
